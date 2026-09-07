@@ -519,31 +519,55 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{doc
 </script>
 
 <script>
-(function(){
+(function () {
   var cfg = window.GISCUS || {};
-  var ready = cfg.repo && cfg.repoId && cfg.categoryId;
-  document.querySelectorAll(".comments").forEach(function(box){
+  var boxes = document.querySelectorAll(".comments");
+  if (!(cfg.repo && cfg.repoId && cfg.categoryId)) {
+    boxes.forEach(function (b) {
+      b.querySelector(".c-mount").innerHTML =
+        '<div class="c-setup">Comments will appear here once <code>config.js</code> has the repo, repoId and categoryId from giscus.app. See README.</div>';
+    });
+    return;
+  }
+  var theme = cfg.theme || new URL("giscus-docket.css", location.href).href;
+  var pageUrl = location.origin + location.pathname;
+  function build(box) {
     var mount = box.querySelector(".c-mount");
-    if(!ready){ mount.innerHTML = '<div class="c-setup">Comments will appear here once <code>config.js</code> has the repo, repoId and categoryId from giscus.app. See README.</div>'; return; }
-    var theme = cfg.theme || (location.protocol === "https:" ? new URL("giscus-docket.css", location.href).href : "dark");
-    var s = document.createElement("script");
-    s.src = "https://giscus.app/client.js";
-    s.setAttribute("data-repo", cfg.repo);
-    s.setAttribute("data-repo-id", cfg.repoId);
-    s.setAttribute("data-category", cfg.category || "Feedback");
-    s.setAttribute("data-category-id", cfg.categoryId);
-    s.setAttribute("data-mapping", "specific");
-    s.setAttribute("data-term", "aura-changes \u00b7 " + box.dataset.term);
-    s.setAttribute("data-strict", "1");
-    s.setAttribute("data-reactions-enabled", "1");
-    s.setAttribute("data-emit-metadata", "0");
-    s.setAttribute("data-input-position", "top");
-    s.setAttribute("data-theme", theme);
-    s.setAttribute("data-lang", "en");
-    s.setAttribute("data-loading", "lazy");
-    s.crossOrigin = "anonymous";
-    s.async = true;
-    mount.appendChild(s);
+    var p = new URLSearchParams({
+      origin: pageUrl,
+      session: "",
+      theme: theme,
+      reactionsEnabled: "1",
+      emitMetadata: "0",
+      inputPosition: "top",
+      repo: cfg.repo,
+      repoId: cfg.repoId,
+      category: cfg.category || "Feedback",
+      categoryId: cfg.categoryId,
+      strict: "1",
+      description: "",
+      backLink: pageUrl,
+      term: "aura-changes \u00b7 " + box.dataset.term
+    });
+    var f = document.createElement("iframe");
+    f.className = "giscus-frame";
+    f.title = "Comments";
+    f.scrolling = "no";
+    f.src = "https://giscus.app/en/widget?" + p.toString();
+    f.style.cssText = "width:100%;border:0;color-scheme:normal;min-height:150px";
+    f.setAttribute("loading", "lazy");
+    mount.innerHTML = "";
+    mount.appendChild(f);
+    box.__frame = f;
+  }
+  boxes.forEach(build);
+  window.addEventListener("message", function (e) {
+    if (e.origin !== "https://giscus.app") return;
+    var d = e.data && e.data.giscus;
+    if (!d || !d.resizeHeight) return;
+    document.querySelectorAll("iframe.giscus-frame").forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = d.resizeHeight + "px";
+    });
   });
 })();
 </script>
