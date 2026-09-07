@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aura · what changes and where</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0F0F;--card:#1A1A1A;--card2:#202028;--white:#fff;--body:#EDEDED;--sub:#A9A9B4;--violet:#623AFE;--violetS:rgba(98,58,254,.35);--magenta:#C13584;--peach:#F77737;--green:#34D399;--font:"Plus Jakarta Sans","Inter",system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--body);font-family:var(--font);font-size:15px;line-height:1.5;
+ background-image:radial-gradient(50% 30% at 85% -5%,rgba(98,58,254,.18),transparent 60%),radial-gradient(35% 25% at 0% 40%,rgba(193,53,132,.08),transparent 60%);background-attachment:fixed}
+a{color:#B6A4FF}
+.wrap{max-width:1100px;margin:0 auto;padding:36px 28px 80px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:26px}
+header h1{font-size:30px;line-height:1.15;color:var(--white);font-weight:700;max-width:760px}
+header .sub{color:var(--sub);margin-top:10px;max-width:720px}
+.logo{height:34px;width:auto;flex:none;margin-top:4px}
+nav{position:sticky;top:0;z-index:5;background:rgba(15,15,15,.88);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,.08);margin:0 -28px 28px;padding:10px 28px;display:flex;gap:6px;flex-wrap:wrap}
+nav a{text-decoration:none;color:var(--body);font-size:13px;font-weight:500;padding:6px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.1)}
+nav a:hover{border-color:var(--violet)}
+section{margin-bottom:56px}
+section>h2{font-size:22px;color:var(--white);font-weight:700;margin-bottom:6px}
+section>p.lead{color:var(--sub);max-width:760px;margin-bottom:18px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--sub);margin-bottom:18px;align-items:center}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.d-keep{background:var(--green)}.d-prompt{background:var(--magenta)}.d-config{background:var(--peach)}.d-kb{background:var(--violet)}
+.tools{margin-left:auto;display:flex;gap:8px}
+button.ghost{background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--body);font:inherit;font-size:12.5px;padding:5px 11px;border-radius:999px;cursor:pointer}
+button.ghost:hover{border-color:var(--violet)}
+button.ghost:focus-visible,.node-head:focus-visible,.chg-head:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+
+/* flow */
+.flow{position:relative;padding-left:26px}
+.flow:before{content:"";position:absolute;left:8px;top:14px;bottom:14px;width:2px;background:linear-gradient(180deg,var(--violet),var(--magenta),var(--peach));opacity:.55}
+.step{position:relative;margin-bottom:14px}
+.step:before{content:"";position:absolute;left:-23px;top:18px;width:12px;height:12px;border-radius:50%;background:var(--bg);border:2px solid var(--violet)}
+.step.branch:before{border-color:var(--magenta)}
+.branch-label{font-size:12.5px;color:var(--sub);margin:0 0 6px 2px}
+.lanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.lane-tag{font-size:12px;font-weight:600;color:var(--white);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.lane-tag span{font-weight:400;color:var(--sub)}
+.node{background:var(--card);border:1px solid var(--violetS);border-radius:14px;overflow:hidden}
+.node.keep{border-color:rgba(52,211,153,.35)}
+.node.prompt{border-color:rgba(193,53,132,.55)}
+.node.config{border-color:rgba(247,119,55,.55)}
+.node-head{width:100%;text-align:left;background:transparent;border:0;color:var(--body);font:inherit;padding:14px 16px;display:grid;grid-template-columns:1fr auto 16px;gap:6px 12px;cursor:pointer;align-items:start;list-style:none}
+.node-head::-webkit-details-marker{display:none}
+.node-head h3{font-size:16px;color:var(--white);font-weight:600}
+.node-head .now{grid-column:1;font-size:13.5px;color:var(--sub);margin-top:3px}
+.pills{grid-column:2;grid-row:1;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.pill{font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid;white-space:nowrap}
+.pill.keep{color:var(--green);border-color:rgba(52,211,153,.5)}
+.pill.prompt{color:#FF7FBF;border-color:rgba(193,53,132,.7)}
+.pill.config{color:var(--peach);border-color:rgba(247,119,55,.7)}
+.pill.kb{color:#B6A4FF;border-color:var(--violetS)}
+.chev{grid-column:3;grid-row:1;align-self:start;color:var(--sub);transition:transform .2s}
+.node[open] .chev{transform:rotate(180deg)}
+.node-body{display:none;padding:2px 16px 16px;border-top:1px solid rgba(255,255,255,.06)}
+.node[open] .node-body{display:block}
+.node-body p{font-size:14px;margin:12px 0 0;max-width:760px}
+.node-body p.evid{color:var(--sub);font-size:13.5px}
+.chg{margin-top:10px;border-radius:10px;background:var(--card2);border-left:3px solid var(--violet);overflow:hidden}
+.chg.prompt{border-left-color:var(--magenta)}.chg.config{border-left-color:var(--peach)}.chg.keep{border-left-color:var(--green)}.chg.kb{border-left-color:var(--violet)}
+.chg-head{list-style:none;width:100%;text-align:left;background:transparent;border:0;color:var(--body);font:inherit;padding:10px 14px;display:flex;justify-content:space-between;gap:12px;cursor:pointer;font-size:14px;font-weight:600}
+.chg-head small{font-weight:500;color:var(--sub);font-size:12px;text-align:right;flex:0 1 45%}
+.chg-head::-webkit-details-marker{display:none}
+.chg-body{display:none;padding:0 14px 12px;font-size:13.5px}
+.chg[open] .chg-body{display:block}
+.chg-body b{color:var(--white);font-weight:600}
+.chg-body .row{display:grid;grid-template-columns:110px 1fr;gap:6px 12px;margin-top:6px}
+.chg-body .row div:first-child{color:var(--sub)}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;background:rgba(255,255,255,.06);padding:1px 5px;border-radius:4px}
+q{quotes:"“" "”"}
+.diff{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.diff div{padding:10px 12px;border-radius:8px;font-size:13.5px;background:rgba(0,0,0,.25)}
+.diff .bad{border:1px solid rgba(193,53,132,.4)}
+.diff .good{border:1px solid rgba(52,211,153,.4)}
+.diff .lbl{display:block;font-size:11.5px;color:var(--sub);margin-bottom:4px}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;color:var(--sub);font-weight:600;font-size:12px;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.14)}
+td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.07);vertical-align:top}
+tr:hover td{background:rgba(255,255,255,.02)}
+.tbl{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:auto;padding:4px 6px}
+.tag{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;border:1px solid;white-space:nowrap}
+.tag.exists{color:var(--green);border-color:rgba(52,211,153,.5)}
+.tag.create{color:#B6A4FF;border-color:var(--violetS)}
+.tag.proposed{color:var(--peach);border-color:rgba(247,119,55,.6)}
+.tag.retire{color:#FF7FBF;border-color:rgba(193,53,132,.7)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px}
+.card h3{font-size:15.5px;color:var(--white);font-weight:600;margin-bottom:6px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.card p{font-size:13.5px;color:var(--body)}
+.card p.ev{color:var(--sub);margin-top:6px}
+.card .own{font-size:12px;color:var(--sub);margin-top:10px}
+.note{font-size:13px;color:var(--sub);margin-top:10px;max-width:800px}
+.grad{height:3px;width:56px;border-radius:2px;background:linear-gradient(120deg,var(--violet),var(--magenta),var(--peach));margin-bottom:12px}
+ul.plain{list-style:none}ul.plain li{padding-left:14px;position:relative;margin-bottom:6px;font-size:13.5px}
+ul.plain li:before{content:"";position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:50%;background:var(--violet)}
+#hubspot table{table-layout:fixed;min-width:1040px}
+#hubspot th:nth-child(1),#hubspot td:nth-child(1){width:17%;word-break:break-word}#hubspot th:nth-child(2),#hubspot td:nth-child(2){width:16%}#hubspot th:nth-child(3),#hubspot td:nth-child(3){width:13%}#hubspot th:nth-child(4),#hubspot td:nth-child(4){width:26%}#hubspot th:nth-child(5),#hubspot td:nth-child(5){width:20%}#hubspot th:nth-child(6),#hubspot td:nth-child(6){width:8%}
+#kb table{table-layout:fixed;min-width:900px}#kb th:nth-child(1),#kb td:nth-child(1){width:14%}#kb th:nth-child(4),#kb td:nth-child(4){width:22%}
+code{word-break:break-word;white-space:normal}
+
+.paths{margin-top:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.tab{background:var(--card);border:1px solid rgba(255,255,255,.12);color:var(--body);font:inherit;font-size:13.5px;font-weight:600;padding:8px 14px;border-radius:10px;cursor:pointer}
+.tab.on{border-color:var(--violet);background:rgba(98,58,254,.18);color:var(--white)}
+.tab:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+.path{display:none}.path.on{display:block}
+.path-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+.rail{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;position:sticky;top:64px}
+.rail h3{font-size:15px;color:var(--white);font-weight:600;margin-bottom:4px}
+.rail .railp{font-size:12.5px;color:var(--sub);margin-bottom:10px}
+.rail .chg{margin-top:8px}
+.rail .chg-head{font-size:13px;padding:9px 12px;flex-wrap:wrap}
+.rail .chg-body{font-size:12.5px;line-height:1.45}
+.rail .chg-body b{display:inline-block;margin-top:4px}
+@media (max-width:960px){.path-grid{grid-template-columns:1fr}.rail{position:static}}
+.pill.test{color:#FFD166;border-color:rgba(255,209,102,.6)}
+.chg.test{border-left-color:#FFD166}
+.pill.direct{color:#fff;background:#8B5CFF;border-color:#B08CFF;box-shadow:0 0 12px rgba(139,92,255,.7)}
+.rail-prose{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}
+.rail-prose h4{font-size:13px;color:var(--white);margin-bottom:4px}
+.rail-prose p{font-size:12.5px;color:var(--body);line-height:1.5}
+
+.c-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:28px}
+.comments{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;margin-top:24px}
+.c-head h3{font-size:15px;color:var(--white);font-weight:600}
+.c-sub{display:block;font-size:12.5px;color:var(--sub);margin:3px 0 10px}
+.c-mount{min-height:60px}
+.c-setup{font-size:13px;color:var(--sub);border:1px dashed rgba(255,255,255,.18);border-radius:10px;padding:12px}
+.c-setup code{color:var(--body)}
+@media (max-width:900px){.c-pair{grid-template-columns:1fr}}
+@media (max-width:640px){header{flex-direction:column}.diff{grid-template-columns:1fr}.node-head{grid-template-columns:1fr}.chev{display:none}.pills{justify-content:flex-start}}
+@media (prefers-reduced-motion:reduce){.chev{transition:none}}
+</style></head><body><div class="wrap">
+
+<header>
+ <div>
+  <h1>Aura: what changes, and where in the conversation it changes</h1>
+  <div class="sub">Living review page. Follow-up to the 2 Sep conversation audit (190 external conversations, 29 Aug to 2 Sep) and the 3 Sep call with Vikash. Part one is the conversation trajectory as the prompt and partial define it, three entry paths plus rejections, with prompt and agent-configuration changes placed on the step they affect. Part two covers email ask wording, configuration, knowledge base, slides and HubSpot fields. Product defects are the last tab.</div>
+ </div>
+ <svg class="logo" viewBox="0 0 292 89" xmlns="http://www.w3.org/2000/svg" aria-label="Docket">
+<g clip-path="url(#clip0_821_2692)">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M69.3513 43.9812C72.6419 40.7612 74.5954 36.6956 74.2248 31.4697C72.8051 11.0086 46.1691 -2.83242 40.1071 1.90518C34.6002 6.1936 41.7019 20.4617 45.4627 28.0174C45.8558 28.8072 46.2124 29.5237 46.5143 30.1477C47.981 33.1896 51.1135 40.6523 52.09 48.535C43.9571 50.8899 34.6907 52.1079 27.5088 53.0518C26.5268 53.1809 25.5837 53.3049 24.6878 53.4259C3.76716 56.2275 -2.99077 63.8517 2.64275 71.84C8.29169 79.8368 28.2498 89.5087 45.5736 87.9258C59.4181 86.6623 66.7501 79.1479 68.6845 75.5551C74.2771 65.9084 72.7869 54.3666 69.3513 43.9812ZM18.21 69.5113C12.3125 65.0211 17.9696 58.9294 29.7628 56.9154C30.8898 56.7232 32.2204 56.5225 33.7042 56.2986C38.8029 55.5293 45.7105 54.487 52.3791 52.5818C52.5619 62.6027 48.2712 72.2398 31.8368 73.4979C29.271 73.6716 22.9278 73.103 18.21 69.5113ZM69.7854 26.5539C72.0079 32.2508 70.9805 36.662 67.9644 40.1055C66.5707 36.4521 65.0074 33.0062 63.5234 29.9162C61.5031 24.541 61.812 14.5851 68.1474 23.3706C68.8824 24.566 69.4346 25.6871 69.7854 26.5539Z" fill="#EDEDED"/>
+<path d="M110.564 70.0135C107.508 70.0135 104.758 69.2611 102.313 67.7568C99.8682 66.2052 97.9404 63.9953 96.5297 61.1272C95.1191 58.2592 94.4141 54.897 94.4141 51.0418C94.4141 47.1864 95.1191 43.8246 96.5297 40.9566C97.9404 38.0885 99.8682 35.8786 102.313 34.3271C104.758 32.7755 107.508 31.9997 110.564 31.9997C113.198 31.9997 115.408 32.5169 117.194 33.5513C119.028 34.5387 120.509 35.8316 121.637 37.4302H121.778V18.5997H128.69V69.0259H121.778V64.7945H121.637C120.462 66.2988 118.957 67.5448 117.123 68.5324C115.337 69.5199 113.15 70.0135 110.564 70.0135ZM101.608 51.0418C101.608 54.8034 102.477 57.9535 104.217 60.4922C105.957 63.0314 108.449 64.301 111.693 64.301C114.796 64.301 117.241 63.1256 119.028 60.7747C120.814 58.3765 121.708 55.1322 121.708 51.0418C121.708 46.9513 120.814 43.7306 119.028 41.3797C117.241 38.9818 114.796 37.7828 111.693 37.7828C108.449 37.7828 105.957 39.0523 104.217 41.5913C102.477 44.1302 101.608 47.2804 101.608 51.0418Z" fill="#EDEDED"/>
+<path d="M149.169 70.0844C145.501 70.0844 142.304 69.2851 139.577 67.6867C136.85 66.0877 134.758 63.8547 133.3 60.9866C131.89 58.1185 131.185 54.8038 131.185 51.0422C131.185 47.2808 131.913 43.9661 133.371 41.098C134.828 38.2299 136.897 35.9966 139.577 34.398C142.304 32.7524 145.525 31.9295 149.239 31.9295C152.907 31.9295 156.08 32.7289 158.761 34.3274C161.488 35.9261 163.556 38.1829 164.967 41.098C166.424 43.9661 167.153 47.2573 167.153 50.9717C167.153 54.7333 166.424 58.0712 164.967 60.9866C163.509 63.8547 161.417 66.0877 158.69 67.6867C156.01 69.2851 152.836 70.0844 149.169 70.0844ZM138.378 51.0422C138.378 54.9916 139.295 58.2122 141.129 60.7041C142.963 63.1491 145.666 64.3719 149.239 64.3719C152.766 64.3719 155.422 63.1491 157.209 60.7041C159.043 58.2122 159.96 54.9916 159.96 51.0422C159.96 47.0928 159.043 43.8955 157.209 41.4506C155.422 38.9587 152.766 37.7127 149.239 37.7127C145.666 37.7127 142.963 38.9352 141.129 41.3801C139.295 43.825 138.378 47.0457 138.378 51.0422Z" fill="#EDEDED"/>
+<path d="M186.716 70.0844C183.19 70.0844 180.087 69.2852 177.407 67.6867C174.727 66.0877 172.658 63.8547 171.2 60.9866C169.743 58.0712 169.014 54.7565 169.014 51.0423C169.014 47.3279 169.743 44.0366 171.2 41.1685C172.658 38.2535 174.703 35.9966 177.336 34.398C180.016 32.7994 183.119 32.0001 186.646 32.0001C189.655 32.0001 192.335 32.6114 194.686 33.8338C197.037 35.0093 198.917 36.6784 200.328 38.8412C201.739 40.957 202.585 43.3784 202.867 46.1054H195.744C195.508 43.8486 194.686 41.8973 193.275 40.2517C191.865 38.5591 189.679 37.7128 186.716 37.7128C183.143 37.7128 180.487 39.0057 178.747 41.5917C177.054 44.1306 176.208 47.2808 176.208 51.0423C176.208 54.8038 177.054 57.9539 178.747 60.4926C180.487 63.0318 183.143 64.3014 186.716 64.3014C189.725 64.3014 191.935 63.4785 193.346 61.8327C194.756 60.1874 195.556 58.1417 195.744 55.6972H202.867C202.726 58.4238 201.95 60.8925 200.539 63.1023C199.129 65.2648 197.225 66.9811 194.827 68.2508C192.429 69.473 189.725 70.0844 186.716 70.0844Z" fill="#EDEDED"/>
+<path d="M206.27 18.5977H213.182V48.2893L228.91 33.0556H236.879L223.056 46.244L238.36 69.0238H230.179L218.401 50.6166L213.182 55.6242V69.0238H206.27V18.5977Z" fill="#EDEDED"/>
+<path d="M253.221 70.0844C249.507 70.0844 246.31 69.2615 243.63 67.6157C240.95 65.9704 238.905 63.7137 237.494 60.8456C236.131 57.9775 235.449 54.6859 235.449 50.9717C235.449 47.2103 236.154 43.8955 237.564 41.0275C239.022 38.1594 241.091 35.9261 243.771 34.3274C246.451 32.7289 249.601 31.9295 253.221 31.9295C258.629 31.9295 262.813 33.5752 265.775 36.8664C268.784 40.1577 270.289 44.6243 270.289 50.2664C270.289 51.63 270.265 52.4997 270.218 52.8759H242.572C242.666 56.1202 243.63 58.8704 245.464 61.1276C247.344 63.3375 249.977 64.4424 253.362 64.4424C256.183 64.4424 258.346 63.7605 259.851 62.3967C261.402 61.0334 262.39 59.5523 262.813 57.9539H269.866C268.831 61.6212 266.927 64.5597 264.153 66.7696C261.379 68.9794 257.735 70.0844 253.221 70.0844ZM263.095 47.4454C263.095 44.5773 262.155 42.2264 260.274 40.3927C258.44 38.512 256.019 37.5717 253.01 37.5717C250.095 37.5717 247.673 38.4885 245.746 40.3222C243.818 42.1089 242.76 44.4832 242.572 47.4454H263.095Z" fill="#EDEDED"/>
+<path d="M285.31 69.4498C282.112 69.4498 279.715 68.6737 278.116 67.1221C276.565 65.5705 275.789 62.8203 275.789 58.8704V38.7706H270.57V33.058H275.789V21.4917H282.7V33.058H289.612V38.7706H282.7V59.0825C282.7 60.9161 282.982 62.162 283.547 62.8203C284.158 63.4311 285.216 63.7368 286.72 63.7368C287.613 63.7368 288.601 63.6432 289.682 63.4548V69.0263C288.272 69.3083 286.814 69.4498 285.31 69.4498Z" fill="#EDEDED"/>
+</g>
+<defs>
+<clipPath id="clip0_821_2692">
+<rect width="290.584" height="87.1249" fill="white" transform="translate(0.742188 0.972656)"/>
+</clipPath>
+</defs>
+</svg>
+</header>
+
+<nav>
+ <a href="#flow">Trajectory</a><a href="#email">Email ask</a><a href="#config">Configuration</a><a href="#kb">Knowledge base</a><a href="#slides">Slides</a><a href="#hubspot">HubSpot fields</a><a href="#product">Product</a>
+</nav>
+
+<section id="flow">
+ <div class="grad"></div>
+ <h2>Part one · the trajectory, as the prompt and partial define it</h2>
+ <p class="lead">Three entry paths from the prompt, one per tab. Each step names the block it comes from, what the flow says, what the transcripts show, and the change. Changes here are prompt or agent-configuration only. Rejections and repairs at any level sit in the side rail because the prompt treats them the same way wherever they occur. Product defects are in the last tab.</p>
+ <div class="legend">
+  <span><i class="dot d-keep"></i>Working, keep</span>
+  <span><i class="dot d-prompt"></i>Prompt or partial edit</span>
+  <span><i class="dot d-config"></i>Agent configuration</span>
+  <span><i class="dot" style="background:#FFD166"></i>Testing now, no change</span>
+  <div class="tools"><button class="ghost" data-act="open">Expand all</button><button class="ghost" data-act="close">Collapse all</button></div>
+ </div>
+
+ <div class="paths">
+  <div class="tabs" role="tablist">
+   <button class="tab on" data-path="a" role="tab">Education, role provided</button>
+   <button class="tab" data-path="b" role="tab">Education, no role</button>
+   <button class="tab" data-path="c" role="tab">Direct meeting request</button>
+  </div>
+
+  <div class="path-grid">
+   <div class="path-main">
+
+   <!-- ================= PATH A ================= -->
+   <div class="path on" data-path="a">
+    <div class="flow">
+
+     <div class="step"><details class="node keep">
+      <summary class="node-head" tabindex="0"><h3>A1 · Greeting, role stated</h3><div class="pills"><span class="pill keep">keep</span></div><div class="now"><code>&lt;role&gt;</code> Exact opener, role asked once. Visitor answers with a role ("Marketing Director", "CEO", "SDR", "Founder"). Role is stored; never asked again.</div><span class="chev">▾</span></summary>
+      <div class="node-body"><p class="evid">Observed: 14 external visitors gave a role in reply to the opener. No re-ask of role after a role was given. The memory greeting that replaces the opener on return visits is a product behaviour, see the Product tab.</p>
+      <details class="chg keep"><summary class="chg-head" tabindex="0">No change<small>Keep</small></summary><div class="chg-body">Opener wording and the single role ask stay as written.</div></details></div>
+     </details></div>
+
+     <div class="step"><details class="node keep">
+      <summary class="node-head" tabindex="0"><h3>A2 · Overview aimed at the role</h3><div class="pills"><span class="pill keep">keep</span><span class="pill test">testing now</span></div><div class="now"><code>&lt;answering_and_value&gt;</code> One overview, aimed at what the role owns (CMO: pipeline quality; RevOps: write-back; Founder: growth efficiency). Role-based education is this step. The pitch stays.</div><span class="chev">▾</span></summary>
+      <div class="node-body"><p class="evid">Observed: role aiming works (Schneider marketing manager got demand-gen framing, Lenovo SDR got "fewer weak meetings", CTO got governance). Separate observation: the same positioning sentence recurs as opener or closer in later replies (98 turns, 66 conversations, four complaints). That is about repetition, not about pitching.</p>
+      <details class="chg test"><summary class="chg-head" tabindex="0">Testing now, not changing: do the same posturing sentences repeat?<small>Test · no prompt edit</small></summary><div class="chg-body">Run five role-stated conversations of six turns each. Count how many replies after the overview contain <q>real buyer conversations</q>, <q>approved knowledge</q>, <q>qualifies naturally</q> or <q>instead of a form fill</q>. Baseline from transcripts: 35% of conversations. Decide after the test whether a phrase rule is needed. Nothing changes in the prompt now.</div></details></div>
+     </details></div>
+     </details></div>
+
+     <div class="step"><details class="node prompt">
+      <summary class="node-head" tabindex="0"><h3>A3 · First high-intent moment · meeting invite</h3><div class="pills"><span class="pill prompt">prompt</span></div><div class="now">After at least two turns of education, with or without a role, even if the visitor only says "yes, yes" and lets Aura proceed, the first high-intent moment fires a meeting invite framed on that topic. Blocks: <code>&lt;buying_signal_rules&gt;</code>, <code>&lt;meeting_offer_and_email_loop&gt;</code> interest ask.</div><span class="chev">▾</span></summary>
+      <div class="node-body"><p class="evid">Behaviour today: the interest ask waits for a second explained subject and is worded as an appetite question; pricing answers end on a bridge ("would you like to find out whether pricing would work for your traffic?") with no invite; two bare affirmatives rarely convert (2 of 4). Result: eXp Realty (pricing twice), Cato, Zarmoney, Dreamspan ("yes" ×3) were never invited.</p>
+      <details class="chg prompt"><summary class="chg-head" tabindex="0">Invite on the first high-intent moment after two education turns<small>Main · buying_signal_rules, meeting_offer_and_email_loop</small></summary><div class="chg-body"><b>Trigger.</b> Two education turns are done (any content, bare affirmatives count as turns) and either a high-intent topic appears (pricing, integrations, competitor, security, proof, implementation) or the visitor gives a second bare affirmative in a row.<br><b>Reply.</b> Answer the topic, then invite, framed on it. Pricing: "Would you like to learn more about pricing from one of our teammates? You could set up some time with Docket on our calendar." Integrations: "Want a teammate to walk through the HubSpot sync with you? We can set up some time on Docket's calendar." One invite per conversation on this path.<br><b>Yes</b> → A5 qualification question, next turn. <b>No</b> → A4.<br><b>Note.</b> The invite is still the appetite question the prompt already has; it never opens the calendar. Calendar opens only after A5 and an accepted email, so no conflict with meeting_cta_eligibility.</div></details></div>
+     </details></div>
+
+     <div class="step"><details class="node prompt">
+      <summary class="node-head" tabindex="0"><h3>A4 · Invite declined · contextual email ask</h3><div class="pills"><span class="pill prompt">prompt</span></div><div class="now">A no to the invite is answered, in the next reply, with an email ask tied to the same topic and led with what they get. Blocks: <code>&lt;meeting_offer_and_email_loop&gt;</code> email ask, <code>&lt;qualification_flow&gt;</code> route 2.</div><span class="chev">▾</span></summary>
+      <div class="node-body"><p class="evid">Behaviour today: a declined interest ask leads to "keep helping" and an email floor that never fired (0 of 4). Zarmoney declined times, asked two more questions, left with nothing held.</p>
+      <details class="chg prompt"><summary class="chg-head" tabindex="0">Decline → contextual email ask, next reply<small>Main · meeting_offer_and_email_loop, qualification_flow route 2 + Partial · email_collection</small></summary><div class="chg-body">Pricing: "No problem. If it helps, a teammate can send you the pricing detail for your traffic. Type your work email in the box below." Integrations: "…send you the HubSpot sync spec." Never in the same reply as the invite (the prompt's stacking rule stands). A refusal here is final; keep helping. Wording follows the typed-only, work-email rule in the email ask section.</div></details></div>
+     </details></div>
+
+     <div class="step"><details class="node keep">
+      <summary class="node-head" tabindex="0"><h3>A5 · Invite accepted · qualification question</h3><div class="pills"><span class="pill direct">Direct meeting requests land here too</span><span class="pill keep">keep</span></div><div class="now"><code>&lt;qualification_flow&gt;</code> Yes to the A3 invite is meeting intent, and a direct "book a demo / talk to someone" request arrives here straight from C2. Next turn: "Docket works across your whole visitor volume, so roughly how many visitors does your site get in a month?" Never stacked with the ask. Line stays internal.</div><span class="chev">▾</span></summary>
+      <div class="node-body"><p class="evid">Observed: asked in 17 conversations, always as its own turn, never stacked. No visitor objected or was told the cutoff. Figures from 2 to 1.5M recorded verbatim.</p>
+      <details class="chg keep"><summary class="chg-head" tabindex="0">No change to wording, line or framing<small>Keep</small></summary><div class="chg-body">Defects are upstream (A3) or downstream (A6).</div></details></div>
+     </details></div>
+
+     <div class="step branch"><div class="branch-label">Route on the figure</div><div class="lanes">
+      <details class="node prompt">
+       <summary class="node-head" tabindex="0"><h3>A6a · At or above 10,000</h3><div class="pills"><span class="pill prompt">prompt</span></div><div class="now"><code>&lt;qualified_meeting_sequence&gt;</code> Intent already exists (they said yes). Two moves: ask for the work email, trigger the Meeting CTA on acceptance. Nothing in between.</div><span class="chev">▾</span></summary>
+       <div class="node-body"><p class="evid">Observed: executed cleanly when reached. One unanswered invitation (Clear Sight, "a million" visitors) was never returned to. Email ask wording says "work email" but the visitor is left to speak or type.</p>
+       <details class="chg prompt"><summary class="chg-head" tabindex="0">Booking email: work email, typed in the box<small>Main · qualified_meeting_sequence + Partial · email_collection</small></summary><div class="chg-body">Both example lines change to "Type your work email in the box below and I'll pull up some times / open the calendar." Rule added, byte-identical in main and partial: every email ask names a work or business email, asks for it typed, never invites a spoken address, never gives a spoken format example or an example domain.</div></details>
+       <details class="chg prompt"><summary class="chg-head" tabindex="0">Return to a deflected invitation once<small>Main · qualified_meeting_sequence</small></summary><div class="chg-body">"If they reply with a question instead of an email, answer it, then return to the invitation once" extends to any deflection, not only questions.</div></details></div>
+      </details>
+      <details class="node prompt">
+       <summary class="node-head" tabindex="0"><h3>A6b · Below 10,000, or no figure</h3><div class="pills"><span class="pill prompt">prompt</span><span class="pill config">action text</span></div><div class="now"><code>&lt;qualification_flow&gt;</code> routes 2 and 4. High intent: email ask led with what they get. Still exploring: keep helping, ask waits for a trigger. No figure: ask what they are solving, then the email ask if intent is real. Visitor must never be able to tell a line exists.</div><span class="chev">▾</span></summary>
+       <div class="node-body"><p class="evid">Observed: route 2 fired correctly for Schneider, SocialTyze, ProGrowth, Impact Foundation. The words it fired with: "Please share your email address… you can say it out loud, like name at company dot com, or type it into the box" in 10 conversations, and "for example gmail dot com, yahoo dot com" twice. That is the <code>request_user_email</code> action's own copy. Verizon (50 visitors) heard "to send you the meeting details" and "I'll leave the meeting for now". Route 4 half-executed for Ingeniux: asked what they were solving, never made the ask.</p>
+       <details class="chg prompt"><summary class="chg-head" tabindex="0">Route 2 and 4 wording: business email, typed, no meeting words<small>Main · qualification_flow, meeting_offer_and_email_loop + Partial · non_eligible_meeting_path</small></summary><div class="chg-body">Pattern becomes: "Before you go, I'd rather not leave you with nothing. Type your business email in the box below and the team will send you a read on where inbound like yours usually leaks." The route-2 ask never mentions meeting, meeting details, scheduling or calendar, and a refusal is never followed by a line implying a meeting was set aside. Route 4: "then make the email ask if the intent is real" becomes "then make the email ask in the next reply unless the visitor has said they are not evaluating".</div></details>
+       <details class="chg config"><summary class="chg-head" tabindex="0">Rewrite the request_user_email action copy<small>Config · Agent settings, Actions</small></summary><div class="chg-body">The action's text is what the visitor hears on this lane; prompt edits do not reach it. Replace with the typed-only, business-email pattern above. Drop the spoken option, the spoken example and any example domain.</div></details></div>
+      </details>
+     </div></div>
+
+     <div class="step"><details class="node keep">
+      <summary class="node-head" tabindex="0"><h3>A7 · Meeting CTA</h3><div class="pills"><span class="pill keep">keep</span></div><div class="now"><code>&lt;meeting_cta_execution&gt;</code> Trigger immediately on accepted email, no further question. Confirmed only on platform success. Failure line is fixed text.</div><span class="chev">▾</span></summary>
+      <div class="node-body"><p class="evid">Observed: calendar shown in 5 conversations, one booking, failure line never needed. Mechanics correct. Inputs were junk; fixed upstream at A6 and in the validation config.</p>
+      <details class="chg keep"><summary class="chg-head" tabindex="0">No change<small>Keep</small></summary><div class="chg-body">Nothing to edit in this block.</div></details></div>
+     </details></div>
+
+     <div class="step"><details class="node prompt">
+      <summary class="node-head" tabindex="0"><h3>A8 · After capture, wind-down, close</h3><div class="pills"><span class="pill prompt">prompt + partial</span></div><div class="now"><code>&lt;meeting_offer_and_email_loop&gt;</code> After capture or refusal: "anything else", keep helping, no re-offer. Wind-down ("thanks / that's all / bye") with no email held is an email trigger. Partial: <code>close_session</code> only on an explicit done.</div><span class="chev">▾</span></summary>
+      <div class="node-body"><p class="evid">Observed: after-capture behaviour correct (Schneider, BlueKanGo). Wind-down trigger fired 0 of 3: AssetWatch "I'm done, goodbye", Meta "I'm all set", eXp "that's all, I'll consider a demo" each got a goodbye. The partial's literal <code>close_session</code> rule is what the model obeyed.</p>
+      <details class="chg prompt"><summary class="chg-head" tabindex="0">Wind-down: ask first, close second<small>Main · meeting_offer_and_email_loop + Partial · tool_usage</small></summary><div class="chg-body">Wind-down phrases extended to "I'm done", "I'll consider it". A sales_evaluation wind-down with no email held is never answered with a goodbye alone: the reply carries the before-you-go ask; <code>close_session</code> waits for their answer or departure and is never called in the same turn as an email ask. Repair-turn exception kept.</div></details></div>
+     </details></div>
+
+    </div>
+   </div>
+
+   <!-- ================= PATH B ================= -->
+   <div class="path" data-path="b">
+    <div class="flow">
+
+     <div class="step"><details class="node keep">
+      <summary class="node-head" tabindex="0"><h3>B1 · Greeting, role not given</h3><div class="pills"><span class="pill keep">keep</span><span class="pill prompt">one re-ask seen</span></div><div class="now"><code>&lt;role&gt;</code> "Most visitors answer only the first half." Continue with the overview, let the role surface, never ask for it again. Role is answer-tailoring only; a missing role never changes whether an ask is due.</div><span class="chev">▾</span></summary>
+      <div class="node-body"><p class="evid">Observed: this is the majority path; 94 of 108 typed conversations never state a role. One re-ask seen: "Tell me your role and I'll aim the…" mid-conversation after garbled input (Nnc Insurance). One disguised re-ask in an internal test: "Would you like the overview framed around marketing conversion or sales qualification?"</p>
+      <details class="chg prompt"><summary class="chg-head" tabindex="0">Close the disguised re-ask<small>Main · role</small></summary><div class="chg-body">Add: "Never re-ask the role in another form, including offering a choice of framing. If a role surfaces later, use it silently." One line; low priority.</div></details></div>
+     </details></div>
+
+     <div class="step"><details class="node keep">
+      <summary class="node-head" tabindex="0"><h3>B2 · Generic overview</h3><div class="pills"><span class="pill keep">keep</span><span class="pill test">testing now</span></div><div class="now"><code>&lt;answering_and_value&gt;</code> "Educate generally and just as well." The default value narrative, once.</div><span class="chev">▾</span></summary>
+      <div class="node-body"><p class="evid">Observed: same repetition defect as A2, and worse here because there is no role to aim at, so the model reaches for the stock sentence more often. Kiwi Website Design, Quick Search, PetroVybe each heard it three or more times.</p>
+      <details class="chg test"><summary class="chg-head" tabindex="0">Same test as A2<small>Test · no prompt edit</small></summary><div class="chg-body">Repeat the repetition count on five no-role conversations. No change now.</div></details></div>
+     </details></div>
+
+     <div class="step"><details class="node prompt">
+      <summary class="node-head" tabindex="0"><h3>B3 · First high-intent moment, no role</h3><div class="pills"><span class="pill prompt">prompt</span></div><div class="now">Identical to A3 and A4: two education turns, then the first high-intent topic or second bare affirmative fires the meeting invite; a no gets the contextual email ask. Role never gates it. Bare affirmatives are the common signal here.</div><span class="chev">▾</span></summary>
+      <div class="node-body"><p class="evid">Observed: Boston University "just browsing" → "both" → CRM list → "ok" → inactivity. Kiwi "yes" → "both" → "I'd like to explore first". Quick Search "yes". PetroVybe "sure, sure, explorer". The two-affirmative rule is the lever here; it fired in 2 of 4 cases.</p>
+      <details class="chg prompt"><summary class="chg-head" tabindex="0">Edits from A3 and A4 apply<small>Main · buying_signal_rules, meeting_offer_and_email_loop</small></summary><div class="chg-body">Invite on the first high-intent moment after two turns; contextual email ask on decline.</div></details></div>
+     </details></div>
+
+     <div class="step"><details class="node prompt">
+      <summary class="node-head" tabindex="0"><h3>B4 · Qualification and routing</h3><div class="pills"><span class="pill prompt">prompt</span></div><div class="now">Same as A5 to A6. Role never gates an ask.</div><span class="chev">▾</span></summary>
+      <div class="node-body"><p class="evid">Observed: no case where a missing role delayed an ask. Correct. The A6 wording and action-text changes apply unchanged.</p>
+      <details class="chg prompt"><summary class="chg-head" tabindex="0">Edits from A6a and A6b apply<small>Main + Partial</small></summary><div class="chg-body">Typed work or business email; no meeting words below the line; return to a deflected invitation once.</div></details></div>
+     </details></div>
+
+     <div class="step"><details class="node prompt">
+      <summary class="node-head" tabindex="0"><h3>B5 · Long education with no role and no ask</h3><div class="pills"><span class="pill prompt">prompt</span></div><div class="now"><code>&lt;meeting_offer_and_email_loop&gt;</code> Email floor: third subject explained, interest ask declined, no email held → overdue. Nothing in the prompt counts minutes.</div><span class="chev">▾</span></summary>
+      <div class="node-body"><p class="evid">Observed: floor fired 0 of 4 (Zarmoney, AssetWatch, Meta, CellCarta). The 9 to 10 minute case from the call maps to one anonymous 11m39s conversation with zero asks; that visitor said "I'm not in a sales position", so it is one conversation, not a pattern. The prompt cannot see a clock; the three-subject floor is the proxy.</p>
+      <details class="chg prompt"><summary class="chg-head" tabindex="0">Floor becomes a rule<small>Main · meeting_offer_and_email_loop, prohibitions</small></summary><div class="chg-body">When <code>topics_covered</code> holds three subjects, <code>interest_ask</code> is declined or re_asked and <code>email_ask</code> is not_made, the next education reply carries the email ask in place of its closing question. A pointer in that reply is a failure. Only a repair turn delays it.</div></details></div>
+     </details></div>
+
+     <div class="step"><details class="node prompt">
+      <summary class="node-head" tabindex="0"><h3>B6 · Wind-down and close</h3><div class="pills"><span class="pill prompt">prompt + partial</span></div><div class="now">Same as A8.</div><span class="chev">▾</span></summary>
+      <div class="node-body"><details class="chg prompt"><summary class="chg-head" tabindex="0">Edit from A8 applies<small>Main + Partial</small></summary><div class="chg-body">Ask first, close second.</div></details></div>
+     </details></div>
+
+    </div>
+   </div>
+
+   <!-- ================= PATH C ================= -->
+   <div class="path" data-path="c">
+    <div class="flow">
+
+     <div class="step"><details class="node keep">
+      <summary class="node-head" tabindex="0"><h3>C1 · Request for a meeting, demo or human</h3><div class="pills"><span class="pill keep">keep</span></div><div class="now"><code>&lt;direct_meeting_path&gt;</code> Settled intent unless <code>intent_type</code> is support, careers, partner or vendor. No education first, no "what do you want to improve", no "are you sure".</div><span class="chev">▾</span></summary>
+      <div class="node-body"><p class="evid">Observed: 9 external direct requests ("book a demo", "show me a demo", "talk to your customer service executive", "j'aimerais voir une démo", "set up a meeting"). None were educated first. One false positive: Verizon's one-word "Conversations." was read as a demo request.</p>
+      <details class="chg keep"><summary class="chg-head" tabindex="0">No change<small>Keep</small></summary><div class="chg-body">The false positive is a voice fragment, covered by the unclear-input rule in the side rail.</div></details></div>
+     </details></div>
+
+     <div class="step"><details class="node keep">
+      <summary class="node-head" tabindex="0"><h3>C2 · Acknowledge and ask traffic, same turn</h3><div class="pills"><span class="pill keep">keep</span></div><div class="now"><code>&lt;direct_meeting_path&gt;</code> "Happy to get that set up. So I can put you with the right person on our team, roughly how many visitors does your site get in a month?" Framed as routing, never eligibility.</div><span class="chev">▾</span></summary>
+      <div class="node-body"><p class="evid">Observed: exact framing used in all 9. Figures answered in 8 (one visitor deflected with "can somebody call me"). No eligibility language.</p>
+      <details class="chg keep"><summary class="chg-head" tabindex="0">No change<small>Keep</small></summary><div class="chg-body">Two questions start to finish, as written.</div></details></div>
+     </details></div>
+
+     <div class="step branch"><div class="branch-label">Route on the figure</div><div class="lanes">
+      <details class="node prompt">
+       <summary class="node-head" tabindex="0"><h3>C3a · At or above 10,000 · email then CTA</h3><div class="pills"><span class="pill prompt">prompt</span></div><div class="now"><code>&lt;qualified_meeting_sequence&gt;</code> "Happy to get that set up. What's your work email so I can pull up some times?" Then the CTA on acceptance. Human request below or above the line always has a route.</div><span class="chev">▾</span></summary>
+       <div class="node-body"><p class="evid">Observed: reached in five conversations. Email asked as "work email" but visitors spoke it; three of five spoken addresses needed correction loops. one visitor (a competitor employee) later asked for a human and heard "I can't connect you to a human, this chat doesn't have a live handoff" with no route.</p>
+       <details class="chg prompt"><summary class="chg-head" tabindex="0">Typed work email<small>Main · qualified_meeting_sequence + Partial · email_collection</small></summary><div class="chg-body">"Happy to get that set up. Type your work email in the box below and I'll pull up some times." Same shared rule as A6a.</div></details>
+       <details class="chg prompt"><summary class="chg-head" tabindex="0">Human request always gets a route, at any point<small>Main · direct_meeting_path</small></summary><div class="chg-body">Extend "never leave a request for a human with no route at all" to cover every point in the conversation including after the calendar is shown: teammate follows up at the held email, or the email ask, or Request a Demo. "No live handoff" and "I can't connect you" are banned phrases.</div></details></div>
+      </details>
+      <details class="node prompt">
+       <summary class="node-head" tabindex="0"><h3>C3b · Below 10,000 · email as the fastest way to a person</h3><div class="pills"><span class="pill prompt">prompt</span></div><div class="now"><code>&lt;direct_meeting_path&gt;</code> Email ask framed as the fastest way to a person. Refused → point to Request a Demo. Never refer to the calendar as conditional.</div><span class="chev">▾</span></summary>
+       <div class="node-body"><p class="evid">Observed: BlueKanGo (1,500) captured correctly. Verizon (50): "To send you the meeting details, please share your email… I'll leave the meeting for now." Self Independent: "I can't open scheduling without your work email." Codesm (2 visitors): "can somebody call me" → "I can't place a phone call" with no Request a Demo pointer.</p>
+       <details class="chg prompt"><summary class="chg-head" tabindex="0">No meeting or calendar words below the line; phone request gets the same route<small>Main · direct_meeting_path, qualification_flow route 2 + Partial · non_eligible_meeting_path</small></summary><div class="chg-body">The below-line email ask on this path reads: "Fastest way to a person is a quick note from the team. Type your work email in the box below and they'll reach out." Never "meeting details", never "I'll leave the meeting", never "can't open scheduling without". A request for a call is a request for a human and takes the same route.</div></details></div>
+      </details>
+      <details class="node keep">
+       <summary class="node-head" tabindex="0"><h3>C3c · No figure, refused or vague</h3><div class="pills"><span class="pill keep">keep</span></div><div class="now"><code>&lt;qualification_flow&gt;</code> route 4: ask what they are trying to solve, then the email ask if intent is real. A direct request is real intent by definition.</div><span class="chev">▾</span></summary>
+       <div class="node-body"><p class="evid">Observed: no external direct-request conversation reached route 4 in the window (one internal test went silent after the traffic question).</p>
+       <details class="chg keep"><summary class="chg-head" tabindex="0">No change here; A6b route-4 tightening applies<small>Keep</small></summary><div class="chg-body">On this path the "if intent is real" test is already met, so the email ask follows the what-are-you-solving turn directly.</div></details></div>
+      </details>
+     </div></div>
+
+     <div class="step"><details class="node keep">
+      <summary class="node-head" tabindex="0"><h3>C4 · CTA, booking, after</h3><div class="pills"><span class="pill keep">keep</span></div><div class="now"><code>&lt;meeting_cta_execution&gt;</code> Calendar on acceptance; "booked" only on platform success; then "anything else". <code>&lt;calendar_failure&gt;</code> fixed line, then email ask if none held.</div><span class="chev">▾</span></summary>
+      <div class="node-body"><p class="evid">Observed: one booking confirmed only after the platform reported it ("Your meeting is booked with David"). Rep name was exposed in that line; the partial says never name a representative in chat.</p>
+      <details class="chg prompt"><summary class="chg-head" tabindex="0">Booking confirmation never names the host<small>Partial · meeting_cta_execution</small></summary><div class="chg-body">Add to the confirmation rule: "State that the meeting is booked and the time; never name the host in chat, even when the platform returns it." One line.</div></details></div>
+     </details></div>
+
+    </div>
+   </div>
+   </div>
+
+   <!-- ================= SIDE RAIL ================= -->
+   <aside class="rail">
+    <h3>Rejections and repairs · any level</h3>
+    <p class="railp">The prompt handles a no the same way wherever it lands. Each tile: rule, what was observed, change if any.</p>
+
+    <details class="chg prompt"><summary class="chg-head" tabindex="0">Interest ask declined<small>meeting_offer_and_email_loop</small></summary><div class="chg-body"><b>Rule.</b> Acknowledge, keep helping, set declined. Re-ask exactly once after a third subject with visible engagement. Twice is final.<br><b>Observed.</b> Declines handled without friction. Re-ask fired for AssetWatch; final decline respected. But the email floor that follows a decline never fired (0 of 4).<br><b>Change.</b> The floor rule in A4/B5.</div></details>
+
+    <details class="chg prompt"><summary class="chg-head" tabindex="0">Meeting invitation declined<small>qualified_meeting_sequence</small></summary><div class="chg-body"><b>Rule.</b> Keep helping warmly; email fallback still applies later.<br><b>Observed.</b> Zarmoney (10,000) said no to times, asked about a self-serve demo, said "too expensive", and never got the fallback.<br><b>Change.</b> Covered by the floor rule and the wind-down rule. No separate edit.</div></details>
+
+    <details class="chg keep"><summary class="chg-head" tabindex="0">Email refused<small>meeting_offer_and_email_loop</small></summary><div class="chg-body"><b>Rule.</b> Final unless the visitor reopens contact intent. Ask if there is anything else, no re-offer.<br><b>Observed.</b> SocialTyze, ProGrowth, Impact Foundation: refusal respected, conversation continued.<br><b>Change.</b> None.</div></details>
+
+    <details class="chg config"><summary class="chg-head" tabindex="0">Email rejected by validation<small>qualified_meeting_sequence · email_collection</small></summary><div class="chg-body"><b>Rule.</b> Ask once more for a company-domain email in one warm sentence without saying why. Second rejection: stop, do not record, Request a Demo.<br><b>Observed.</b> Retry made. The rejection sentence named the category three times and the retry loop ran past two attempts (one visitor, four addresses). Copy is the validation component's, not the prompt's.<br><b>Change.</b> Agent settings if the rejection copy is editable there; otherwise a product ticket. Prompt text unchanged.</div></details>
+
+    <details class="chg keep"><summary class="chg-head" tabindex="0">Non-sales intent<small>non_sales_intent · intent_routing</small></summary><div class="chg-body"><b>Rule.</b> Support, partner, careers, vendor: route in one line, no qualification, no ask of any kind.<br><b>Observed.</b> BMO partner, Google customer, staff questions: no asks. Correct.<br><b>Change.</b> None.</div></details>
+
+    <details class="chg keep"><summary class="chg-head" tabindex="0">Out of scope<small>non_sales_intent</small></summary><div class="chg-body"><b>Rule.</b> Decline in one line, redirect in the same message, no partial answers.<br><b>Observed.</b> Recipes, weather, Python, capital of Uganda, F1, translation: all declined and redirected. Two slips: an English-proficiency assessment was given (Target Access Hub); today's date was given (Plastichem).<br><b>Change.</b> None; two slips in 190 is within tolerance.</div></details>
+
+    <details class="chg keep"><summary class="chg-head" tabindex="0">Repair turns<small>per_turn_loop step 1</small></summary><div class="chg-body"><b>Rule.</b> Stop / wait / "you're repeating" / audio broken / correction: resolve first, no ask in that turn or the next.<br><b>Observed.</b> "Stop" respected in 6 conversations. Audio fallback to text offered correctly. No ask made in a repair turn in any transcript.<br><b>Change.</b> None.</div></details>
+
+    <details class="chg prompt"><summary class="chg-head" tabindex="0">Unclear input<small>answering_and_value case 1</small></summary><div class="chg-body"><b>Rule.</b> Fragment or garble: ask them to say it again, nothing else.<br><b>Observed.</b> Handled correctly in most cases. One fragment ("Conversations.") was read as a demo request and started the direct path for a 50-visitor site.<br><b>Change.</b> Add to direct_meeting_path: "A single word or fragment is never a meeting request; treat it as unclear input."</div></details>
+
+    <details class="chg prompt"><summary class="chg-head" tabindex="0">Knowledge gap in an interested conversation<small>answering_and_value case 3</small></summary><div class="chg-body"><b>Rule.</b> Lead with what is confirmable, name the unknown, offer a teammate; in a high-intent conversation that offer bridges to the email ask.<br><b>Observed.</b> Shape followed. The bridge never happened: AssetWatch's resync gap and Meta's routing gap both ended with "a teammate can confirm" and no ask.<br><b>Change.</b> "the natural bridge" becomes "the next reply after a case 3 answer in a conversation with a high-intent topic carries the email ask, unless one is held or refused".</div></details>
+
+    <details class="chg keep"><summary class="chg-head" tabindex="0">Calendar failure<small>calendar_failure</small></summary><div class="chg-body"><b>Rule.</b> Fixed line, Request a Demo pointer, then the email ask if none held.<br><b>Observed.</b> Never triggered in the window.<br><b>Change.</b> None.</div></details>
+
+    <details class="chg keep"><summary class="chg-head" tabindex="0">Prompt extraction, identity, model<small>prompt_security</small></summary><div class="chg-body"><b>Rule.</b> Fixed refusal; fixed multi-model line; never name a vendor.<br><b>Observed.</b> Held under 20 turns of injection, a pasted system prompt (Plastichem), env-var probes, "which LLM" ×3. One phrase "not open-ended model mixing" is a near-miss, not a leak.<br><b>Change.</b> None.</div></details>
+<div class="rail-prose"><h4>In plain terms</h4><p>Whatever step a visitor is on, a no is treated the same way. If they decline the meeting invite, Aura keeps helping and offers an email tied to what they were asking about; if they decline that too, it stops asking and just answers questions. If an address is rejected, Aura asks once more for a company-domain email, typed, and on a second rejection points to Request a Demo and moves on. If the visitor is a customer, partner, job seeker or vendor, Aura routes them in one line and never asks for anything. If they ask for something outside Docket, Aura declines in one sentence and returns to their inbound question. If they say stop, complain, correct Aura, or the audio breaks, Aura fixes that first and makes no ask in that turn or the next. A fragment is asked again, never guessed at. And when Aura cannot confirm something about Docket in a conversation that is clearly interested, the offer of a teammate is where the email ask belongs.</p></div>
+   </aside>
+  </div>
+ 
+<div class="c-pair">
+ <div class="comments" data-term="trajectory">
+  <div class="c-head"><h3>Feedback · Part one · trajectory (all three paths)</h3><span class="c-sub">Threaded. Reply to a comment or add a new one. Sign in with GitHub to post.</span></div>
+  <div class="c-mount"></div>
+ </div>
+ <div class="comments" data-term="rejections">
+  <div class="c-head"><h3>Feedback · Rejections and repairs</h3><span class="c-sub">Threaded. Reply to a comment or add a new one. Sign in with GitHub to post.</span></div>
+  <div class="c-mount"></div>
+ </div></div>
+</section>
+
+<section id="config">
+ <div class="grad"></div>
+ <h2>Agent configuration changes</h2>
+ <p class="lead">Settings Jesse can change in the Docket dashboard without a product ticket.</p>
+ <div class="cards">
+  <div class="card"><h3>request_user_email action copy <span class="tag retire">high</span></h3><p>Replace the follow-up email text with the typed-only, business-email pattern from the email ask section. Remove "say it out loud", the spoken example and any example domain.</p><p class="ev">Observed in 10 external conversations on the follow-up lane.</p><div class="own">Owner: Jesse · Mon 7 Sep</div></div>
+  <div class="card"><h3>Email validation rejection copy <span class="tag proposed">if editable</span></h3><p>"That one won't reach you reliably. Type your email at your company domain in the box below." No category names. If this copy is not editable in agent settings it moves to the Product tab.</p><div class="own">Owner: Jesse to check · Mon 7 Sep</div></div>
+  <div class="card"><h3>Slide metadata <span class="tag retire">high</span></h3><p>Invisible context text on each slide so retrieval matches pricing, integrations, handoff and routing questions, not only the flow slide. Audit and replace the Lauren-approved set.</p><div class="own">Owner: Vikash with Lauren · Mon 7 Sep</div></div>
+  <div class="card"><h3>Post-call analysis prompts <span class="tag retire">high</span></h3><p>Create the eleven spec fields as analysis prompts per the HubSpot table and connect Business Problem to <code>docket_agent_problem</code>.</p><div class="own">Owner: Jesse · Mon 7 Sep</div></div>
+  
+ </div>
+
+ <div class="comments" data-term="configuration">
+  <div class="c-head"><h3>Feedback · Agent configuration changes</h3><span class="c-sub">Threaded. Reply to a comment or add a new one. Sign in with GitHub to post.</span></div>
+  <div class="c-mount"></div>
+ </div>
+</section>
+<section id="email">
+ <div class="grad"></div>
+ <h2>Part two · email ask wording</h2>
+ <p class="lead">Two rules from the call: name the kind of email, and only ever ask for it typed. Speech recognition on addresses lost at least one real lead and produced most of the junk.</p>
+ <div class="cards">
+  <div class="card"><h3>Booking path <span class="tag retire">prompt</span></h3>
+   <div class="diff"><div class="bad"><span class="lbl">Today</span>"Happy to get that set up. What's your work email so I can pull up some times?"</div><div class="good"><span class="lbl">Change to</span>"Happy to get that set up. Type your work email in the box below and I'll pull up some times."</div></div>
+   <div class="diff"><div class="bad"><span class="lbl">Today</span>"Great. What's your work email so I can open the calendar?"</div><div class="good"><span class="lbl">Change to</span>"Great. Type your work email in the box below and I'll open the calendar."</div></div>
+  </div>
+  <div class="card"><h3>Follow-up path <span class="tag retire">prompt</span> <span class="tag proposed">action text</span></h3>
+   <div class="diff"><div class="bad"><span class="lbl">Today (action text)</span>"Please share your email address so we can follow up. You can say it out loud, like 'name at company dot com,' or type it into the box on the screen."</div><div class="good"><span class="lbl">Change to</span>"Before you go, I'd rather not leave you with nothing. Type your business email in the box below and the team will send you a read on where inbound like yours usually leaks."</div></div>
+   <p class="ev">The prompt's own pattern already says "work email"; the action's copy overrides it on this lane. Both change.</p>
+  </div>
+  <div class="card"><h3>Rejected address <span class="tag proposed">sub-agent</span></h3>
+   <div class="diff"><div class="bad"><span class="lbl">Today</span>"I can't accept that email address because it's a disposable one. Please share a different email, preferably your work email."</div><div class="good"><span class="lbl">Change to</span>"That one won't reach you reliably. Type your email at your company domain in the box below."</div></div>
+   <p class="ev">Second rejection: stop, do not record, point to Request a Demo. Unchanged from the prompt; the sub-agent needs to inherit it.</p>
+  </div>
+  <div class="card"><h3>Rule to add to both prompt and partial <span class="tag retire">prompt</span></h3>
+   <p>"Every email ask names a work or business email and asks the visitor to type it in the box. Never invite the visitor to say an address aloud, never offer a spoken format example, and never name an example domain. If the visitor speaks an address anyway, ask them to type it so it is captured exactly."</p>
+   <p class="ev">Add under <code>&lt;meeting_offer_and_email_loop&gt;</code> THE EMAIL ASK and under <code>&lt;email_collection&gt;</code> in the partial. Keep the two byte-identical.</p>
+  </div>
+ </div>
+
+ <div class="comments" data-term="email-ask">
+  <div class="c-head"><h3>Feedback · Email ask wording</h3><span class="c-sub">Threaded. Reply to a comment or add a new one. Sign in with GitHub to post.</span></div>
+  <div class="c-mount"></div>
+ </div>
+</section><section id="kb">
+ <div class="grad"></div>
+ <h2>Knowledge base consolidation</h2>
+ <p class="lead">Vikash's diagnosis matches the transcripts: same question, different answers, in the same week. Each row needs one canonical chunk and the conflicting sources removed. No owner was assigned on the call.</p>
+ <div class="tbl"><table>
+  <tr><th>Topic</th><th>Said to one visitor</th><th>Said to another</th><th>Canonical answer needed</th></tr>
+  <tr><td>Pricing</td><td>a specific annual figure plus two named monthly tiers with a visitor cap</td><td>"Custom, no free trial" (Foundation Partners) · "can't confirm the package" (SocialTyze, Codesm)</td><td>One pricing chunk: tiers, what is included, no-trial policy</td></tr>
+  <tr><td>Human handoff</td><td>"Docket can hand off to a human" (AssetWatch)</td><td>"No live handoff" (Qualified) · "can't confirm" (Meta)</td><td>What handoff is in this deployment, in one sentence</td></tr>
+  <tr><td>Resync cadence</td><td>"Documented re-sync interval, manual refresh available" (eXp)</td><td>"Can't confirm cadence or crawl behaviour" (AssetWatch)</td><td>Either the interval is published or it is not; pick</td></tr>
+  <tr><td>Language coverage</td><td>"Auto-detects and responds in 40+ languages" (Schneider)</td><td>"Can't confirm language coverage" (Treasury Wine)</td><td>Supported-language statement</td></tr>
+  <tr><td>Integrations</td><td>"Salesforce, HubSpot, Dynamics 365; Marketo is not a CRM"</td><td>Four other lists adding Demandbase, GA, Mixpanel, RevenueHero, Intercom, Zoom, Zendesk</td><td>One list split by CRM / MAP / collaboration / knowledge</td></tr>
+  <tr><td>Customers and proof</td><td>ZoomInfo, Demandbase, Pathify, NewStore, Showpad, Zenity, Whatfix; 15% pipeline, 12% win rate</td><td>"Can't confirm customer names or outcome numbers" (internal test)</td><td>Approved logo list and approved outcome figures</td></tr>
+  <tr><td>Implementation</td><td>Deploy tab, GTM custom HTML, WordPress/Webflow/Shopify, 7 to 14 days</td><td>"Can't confirm exact steps" (anon)</td><td>One implementation chunk</td></tr>
+  <tr><td>Avatar</td><td>"Custom avatars supported; video avatar in Scale plan" (eXp)</td><td>"Avatar support is coming; Frameless via early access" (Splyt)</td><td>Current avatar and Frameless status</td></tr>
+  <tr><td>Missing entirely</td><td colspan="2">"Frameless" (homepage term, BMO asked twice) · that the voice widget is Docket (Chris) · self-serve demo policy · API availability · adoption and callout tactics (David's test)</td><td>Add chunks</td></tr>
+  <tr><td>Wrong</td><td colspan="2">AQL expanded as "Accepted Qualified Lead" in one internal test</td><td>Agent Qualified Lead, every time</td></tr>
+ </table></div>
+ <p class="note">Sequence: consolidate pricing, handoff and integrations first, since those are the high-intent topics that trigger the traffic question and are where a contradictory answer costs the most.</p>
+
+ <div class="comments" data-term="knowledge-base">
+  <div class="c-head"><h3>Feedback · Knowledge base consolidation</h3><span class="c-sub">Threaded. Reply to a comment or add a new one. Sign in with GitHub to post.</span></div>
+  <div class="c-mount"></div>
+ </div>
+</section><section id="slides">
+ <div class="grad"></div>
+ <h2>Slide display</h2>
+ <p class="lead">Vikash has never seen a slide surface; Jesse has once. Unclear whether prompt-level or product-level.</p>
+ <div class="cards">
+  <div class="card"><h3>Retrieval relevance</h3><p>Add invisible context text to each slide so the retrieval index matches the questions visitors actually ask: pricing tiers, integrations list, handoff dossier, routing. Today only the flow slide ever surfaces.</p><p class="ev">Slides are the Lauren-approved set; audit, consolidate and replace.</p><div class="own">Owner: Vikash with Lauren</div></div>
+  <div class="card"><h3>Prompt side and test requirement</h3><p>The partial says call <code>slides_retrieval</code> on every answer; no prompt change until rendering is confirmed. Test before and after the slide changes: run the two phrasings that triggered a slide in the transcripts ("run me through a complete sample of how it works", "can you show me visually") plus one question per new slide topic (pricing, integrations, handoff dossier, routing). Pass: Aura says a slide is on screen and a slide is visibly rendered in the frameless UI; screenshot each. Fail on either half is a separate ticket: no narration is retrieval, narration without render is product.</p><div class="own">Owner: Jesse · with the slide deploy on Mon 7 Sep</div></div>
+ </div>
+
+ <div class="comments" data-term="slides">
+  <div class="c-head"><h3>Feedback · Slide display</h3><span class="c-sub">Threaded. Reply to a comment or add a new one. Sign in with GitHub to post.</span></div>
+  <div class="c-mount"></div>
+ </div>
+</section><section id="hubspot">
+ <div class="grad"></div>
+ <h2>HubSpot fields · post-call analysis pattern</h2>
+ <p class="lead">Built on Vikash's spec (Docket Agent: HubSpot Field Spec, Slack, 13 Aug). Post-call analysis has two fields today, one on and one off; the second table is what gets added as new analysis prompts and then connected to custom HubSpot properties. Each row is one analysis prompt: name under 40 characters, permitted responses where the spec wants an enum, and the transcript condition that produces a non-default value. Design rules from the spec hold: the agent writes evidence, automation owns lifecycle, namespace <code>docket_agent_*</code>.</p>
+
+ <h3 style="font-size:16px;color:var(--white);margin:18px 0 8px">Current post-call analysis fields · from the screenshot</h3>
+ <div class="tbl"><table>
+  <tr><th>Field</th><th>State</th><th>Instruction today</th><th>What it captures</th><th>HubSpot property to connect</th><th>Status</th></tr>
+  <tr><td>Business Problem</td><td><span class="tag exists">On</span></td><td>"What is the business problem the visitor stated?"</td><td>The visitor's own description of their inbound problem, when they give one (answers to "where does your inbound leak", funnel descriptions). Blank when they only ask about Docket.</td><td><code>docket_agent_problem</code> · Contact · Multi-line</td><td><span class="tag exists">Keep, connect</span></td></tr>
+  <tr><td>Email Agent Mentioned</td><td><span class="tag retire">Off</span></td><td>"Whenever a prospect mentions about email, email nurturing, or similar phrases, flag it as True. Else, flag False."</td><td>A yes/no on whether the visitor talked about email outreach or nurturing, i.e. interest in Docket's email agent rather than the website agent. Currently disabled, so it writes nothing.</td><td>None in the spec. Closest home is a product-interest signal; would need its own property or a value inside <code>docket_agent_use_case</code>.</td><td><span class="tag proposed">Leave off until a consumer is named</span></td></tr>
+ </table></div>
+
+ <h3 style="font-size:16px;color:var(--white);margin:22px 0 8px">To add · new post-call analysis prompts, then connect to custom HubSpot properties</h3>
+ <div class="tbl"><table>
+  <tr><th>Name (≤40 chars)</th><th>HubSpot property · object</th><th>Permitted responses</th><th>Instruction</th><th>Trigger condition</th><th>Status</th></tr>
+  <tr><td>Docket_Monthly_Visitors</td><td><code>docket_agent_monthly_visitors</code> · Company · Number</td><td>free number</td><td>Return the monthly traffic figure the visitor stated in reply to the traffic question, as a number, in the unit they used. Do not convert units. If no figure was stated, return blank.</td><td>Visitor gives a number after "how many visitors does your site get in a month". Vague ("not many", "I don't know") → blank.</td><td><span class="tag create">Create</span></td></tr>
+  <tr><td>Docket_ICP_Fit</td><td><code>docket_agent_icp_fit</code> · Contact</td><td>Pass · Fail · Not enough information</td><td>Pass if the stated monthly traffic figure is 10,000 or more. Fail if below 10,000. Not enough information if no figure was stated.</td><td>Traffic figure present. Spec also lists employee count; Aura is forbidden from asking it, so fit here is traffic only.</td><td><span class="tag create">Create</span></td></tr>
+  <tr><td>Docket_Meeting_Readiness</td><td><code>docket_agent_meeting_readiness</code> · Contact</td><td>Ready · Not ready · Not enough information</td><td>Ready if the visitor asked for a meeting, demo, pricing conversation or a human, or accepted an offer of time with the team. Not ready if they declined such an offer or said they are exploring or not in a buying role. Otherwise Not enough information.</td><td>Any of: "book a demo", "talk to someone", "yes" to "want me to pull up some times". Decline phrases: "keep going here", "not yet", "just exploring".</td><td><span class="tag create">Create</span></td></tr>
+  <tr><td>Docket_AQL_Status</td><td><code>docket_agent_aql_status</code> · Contact</td><td>AQL · Not AQL · Insufficient evidence</td><td>AQL only if ICP fit is Pass and meeting readiness is Ready and a work email was accepted. Not AQL if either fit is Fail or readiness is Not ready. Insufficient evidence otherwise.</td><td>Derived from the two fields above plus email capture. The only field the lifecycle workflow reads. Junk emails in this export would all be Insufficient evidence or Not AQL under this rule.</td><td><span class="tag create">Create</span></td></tr>
+  <tr><td>Docket_Readiness_Evidence</td><td><code>docket_agent_readiness_evidence</code> · Contact · Multi-line</td><td>free text</td><td>Quote the visitor turns that justify the readiness value, verbatim, up to three. Blank if readiness is Not enough information.</td><td>Populated whenever readiness is Ready or Not ready.</td><td><span class="tag create">Create</span></td></tr>
+  <tr><td>Docket_No_Fit_Reason</td><td><code>docket_agent_no_fit_reason</code> · Contact</td><td>Below traffic threshold · Competitor or vendor · Student or job seeker · Existing customer · Unsupported use case · Out of region · Below employee threshold · Other</td><td>Set when fit is Fail or intent is not sales evaluation. Below traffic threshold when the figure is under 10,000. Existing customer, Competitor or vendor, Student or job seeker from what the visitor said about themselves. Unsupported use case when they asked Docket to do something outside website buyer conversations. Out of region and Below employee threshold only if the visitor volunteered it.</td><td>Fit Fail, or intent_type in existing_customer_support, partner_reseller, careers, vendor, other. Examples in this export: Google "I'm a customer", BMO "I'd want to sell it", Sutherland WhatsApp channel, Qualified.com and Warmly employees.</td><td><span class="tag create">Create</span></td></tr>
+  <tr><td>Docket_Use_Case</td><td><code>docket_agent_use_case</code> · Contact · Multi-line</td><td>free text</td><td>What the visitor wants Docket to do for them, in their words. Blank if not stated.</td><td>Visitor describes a desired outcome ("de-anonymise and qualify without a form", "book meetings for my reps", "answer preneed questions").</td><td><span class="tag create">Create</span></td></tr>
+  <tr><td>Docket_Incumbent</td><td><code>incumbent</code> · Contact</td><td>Qualified · Drift · Intercom · Chili Piper · Agentforce · Other vendor · Form only · Manual or none · Not discussed</td><td>The tool the visitor currently uses for website engagement or scheduling. Other vendor if named but not listed. Form only if they describe forms and no chat. Manual or none if they say nothing is in place. Not discussed otherwise.</td><td>Visitor names a current tool. In this export: Qualified (Cato), HubSpot chatbot (Rich Products → Other vendor), Chat Smart 360 (Kor → Other vendor), "our current chatbot" (Foundation Partners → Other vendor), Drift replacement (Sneha, internal).</td><td><span class="tag create">Create</span></td></tr>
+  <tr><td>Docket_Evaluation_Trigger</td><td><code>docket_agent_evaluation_trigger</code> · Contact · Multi-line</td><td>free text</td><td>Why the visitor is evaluating now: a renewal, a launch, a failed tool, a new mandate. Verbatim where possible. Blank if not stated.</td><td>Time-bound or causal statements: "replacing Qualified", "we've had bad experiences with AI", "nobody has ever bought on this site".</td><td><span class="tag create">Create</span></td></tr>
+  <tr><td>Docket_CRM</td><td><code>docket_agent_crm</code> · Company</td><td>HubSpot · Salesforce · Both · Other · Not discussed</td><td>The CRM the visitor said they use. Other for any named system not listed, including custom or home-built. Not discussed if never mentioned.</td><td>Volunteered only; Aura is forbidden from asking. In this export: Salesforce (CellCarta, Lucid), HubSpot (Rich Products), Other (Clear Sight custom CRM, vtiger).</td><td><span class="tag create">Create</span></td></tr>
+  <tr><td>Docket_Stated_Employee_Count</td><td><code>docket_agent_stated_employee_count</code> · Company · Number</td><td>free number</td><td>Employee count if the visitor stated one. Blank otherwise.</td><td>Volunteered only; never asked. Expect near-zero fill from Aura. Consider dropping from the marketing-agent mapping.</td><td><span class="tag create">Create, low fill</span></td></tr>
+ </table></div>
+
+ <p class="note">Not mapped from the spec because Aura's flow cannot produce them: <code>ip_country</code> (platform enrichment, not analysis), <code>utm_*</code> (pulled from URL at capture, not from the transcript), <code>rh_*</code> meeting fields and <code>hubspot_owner_id</code> (written by scheduling). </p>
+
+ <div class="comments" data-term="hubspot">
+  <div class="c-head"><h3>Feedback · HubSpot fields</h3><span class="c-sub">Threaded. Reply to a comment or add a new one. Sign in with GitHub to post.</span></div>
+  <div class="c-mount"></div>
+ </div>
+</section><section id="product">
+ <div class="grad"></div>
+ <h2>Product · behaviours neither prompt nor agent settings can change</h2>
+ <p class="lead">Each of these is prohibited in the prompt or partial and happens anyway, or comes from a component the prompt does not reach. Tickets to product, with the transcript evidence to attach.</p>
+ <div class="cards">
+  <div class="card"><h3>Latency filler pre-messages <span class="tag retire">high</span></h3><p>"Let me think…", "Let me walk through…", "I'll keep it crisp/tight/practical", "Good question" sent as their own message seconds before the real reply. 137 agent turns. Every one is banned in the prompt.</p><p class="ev">Ask: disable the filler pool or set it to silence.</p><div class="own">Evidence: same-second timestamps as the tool call, e.g. Zarmoney 17:11:00 / 17:11:21</div></div>
+  <div class="card"><h3>Inactivity close and pings <span class="tag retire">high</span></h3><p>"Since we haven't spoken for a while, I'll be ending this session" 18× in 15 conversations. "Still there?" 31×. Not in either prompt. Landed as the last message on the BlueKanGo lead after capture.</p><p class="ev">Ask: remove, or replace with one value-forward line that carries the email ask when intent is sales and no email is held.</p></div>
+  <div class="card"><h3>Slide rendering in frameless <span class="tag retire">high</span></h3><p>Aura narrated a slide as on screen in 5 external conversations, so retrieval returns one. Vikash has never seen one render; Jesse once. Rendering, not retrieval, is the open question.</p><p class="ev">Repro: "run me through a complete sample of how it works" or "can you show me visually". Both triggered the flow slide.</p><div class="own">Evidence: Dreamspan 02:13, Kor Unlimited 16:21, Mimos 16:23, Librairie 14:50, Cameron 15:37</div></div>
+  <div class="card"><h3>Investigate how memory is working <span class="tag proposed">investigate</span></h3><p>On return visits the memory greeting replaces the mandated opener and misattributes: one visitor denied belonging to the company Aura named, a Japanese visitor was greeted with a surname from another session, another was greeted by a name from a prior session, and an internal tester was told he had been "frustrated" in a previous conversation. Aura then tells visitors it keeps no memory.</p><p class="ev">Ask: establish what memory is keyed on (cookie, IP, enrichment), why it crosses visitors, and whether the greeting should be on while that is unresolved.</p></div>
+  
+ </div>
+
+ <div class="comments" data-term="product">
+  <div class="c-head"><h3>Feedback · Product</h3><span class="c-sub">Threaded. Reply to a comment or add a new one. Sign in with GitHub to post.</span></div>
+  <div class="c-mount"></div>
+ </div>
+</section>
+
+</div>
+<script>
+document.querySelectorAll('.tools button').forEach(b=>b.addEventListener('click',()=>{const open=b.dataset.act==='open';document.querySelectorAll('#flow details').forEach(d=>d.open=open);}));
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));document.querySelectorAll('.path').forEach(p=>p.classList.toggle('on',p.dataset.path===t.dataset.path));}));
+</script>
+
+<script type="module" src="https://giscus.app/es/giscus-widget.js"></script>
+<script>
+(function(){
+  const cfg=window.GISCUS||{};
+  const ready=cfg.repo&&cfg.repoId&&cfg.categoryId;
+  const themeUrl=location.protocol==='https:'?new URL('giscus-docket.css',location.href).href:'dark';
+  document.querySelectorAll('.comments').forEach(box=>{
+    const mount=box.querySelector('.c-mount');
+    if(!ready){mount.innerHTML='<div class="c-setup">Comments will appear here once <code>config.js</code> has the repo, repoId and categoryId from giscus.app. See README.</div>';return;}
+    const w=document.createElement('giscus-widget');
+    w.setAttribute('repo',cfg.repo); w.setAttribute('repoid',cfg.repoId);
+    w.setAttribute('category',cfg.category||'Feedback'); w.setAttribute('categoryid',cfg.categoryId);
+    w.setAttribute('mapping','specific'); w.setAttribute('term','aura-changes · '+box.dataset.term);
+    w.setAttribute('strict','1'); w.setAttribute('reactionsenabled','1'); w.setAttribute('emitmetadata','0');
+    w.setAttribute('inputposition','top'); w.setAttribute('theme',cfg.theme||themeUrl); w.setAttribute('lang','en'); w.setAttribute('loading','lazy');
+    mount.appendChild(w);
+  });
+})();
+</script>
+</body></html>
